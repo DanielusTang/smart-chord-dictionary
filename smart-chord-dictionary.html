@@ -13,7 +13,7 @@
             height: 14rem;
             background: #1f2937;
             border-radius: 0.5rem;
-            overflow: hidden;
+            overflow: hidden; /* Clips content */
             transition: all 0.3s ease;
         }
 
@@ -62,15 +62,9 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans flex flex-col items-center py-10">
 
-    <div class="w-full max-w-4xl px-4 mb-6">
-        <a href="portfolio_v1.html" class="inline-flex items-center text-gray-400 hover:text-white transition-colors duration-200 font-medium">
-            <span class="mr-2">←</span> Back to Portfolio
-        </a>
-    </div>
-
     <header class="text-center mb-8 px-4">
         <h1 class="text-3xl md:text-4xl font-bold mb-2 text-white">Smart Chord Dictionary</h1>
-        <p class="text-gray-400 text-sm">Select a root & quality. The keyboard expands automatically for wide chords.</p>
+        <p class="text-gray-400 text-sm">Select Root, Quality & Inversion. The piano expands automatically.</p>
     </header>
 
     <div class="w-full max-w-4xl px-2 mb-8">
@@ -90,62 +84,17 @@
             <div id="quality-container" class="flex flex-wrap gap-2"></div>
         </div>
 
+        <div class="bg-gray-800 p-4 md:p-6 rounded-xl border border-gray-700">
+            <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3 font-semibold">3. Select Inversion</h3>
+            <div id="inversion-container" class="flex flex-wrap gap-2"></div>
+        </div>
+
         <div id="ai-section" class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-xl border border-gray-700 mt-8 hidden">
             <div class="flex items-center justify-between mb-4 border-b border-gray-700 pb-2">
                 <h2 class="text-xl font-bold text-red-400 flex items-center gap-2">AI Theorist</h2>
                 <span id="current-chord-display" class="bg-gray-700 px-3 py-1 rounded text-sm font-mono text-white"></span>
             </div>
             <div id="ai-content" class="text-gray-300 leading-relaxed text-sm md:text-base space-y-3"></div>
-        </div>
-
-        <div class="bg-gray-800 p-4 md:p-6 rounded-xl border border-gray-700 mt-8">
-            <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3 font-semibold">Prompt Used</h3>
-            <textarea class="w-full h-48 bg-gray-900 text-gray-300 p-3 rounded-lg border border-gray-600 font-mono text-sm focus:outline-none focus:border-red-500 transition" readonly>
-The "Smart Chord Dictionary" Prompt
-Context: I am building a portfolio project called "Smart Chord Dictionary." I need a single-file HTML solution using Tailwind CSS and Vanilla JavaScript.
-
-1. The Goal:
-Create an interactive music theory tool that visualizes chords on a virtual piano. It must feature "smart" UI logic that adapts to the user's selection.
-
-2. Data Requirements:
-Include a comprehensive dictionary of chord intervals for:
-
-Basics: 5, Major, Minor, sus, dim, aug.
-
-Sevenths: 7, m7, Maj7, mM7, dim7, m7b5, aug7, 7b5, 7#5.
-
-Extensions: 6, m6, 6/9, add9, 9, m9, Maj9, 11, m11, Maj11.
-
-Extended Range: 13, m13, Maj13.
-
-3. UI & Core Logic:
-
-The Piano: Start by rendering 2 octaves of keys. Use absolute positioning with percentages to ensure black keys sit perfectly between white keys.
-
-Smart Resizing (Crucial): If a selected chord (like a 13th) has notes that exceed the 2-octave range, automatically re-render the piano to show 3 octaves. Shrink it back to 2 octaves when not needed.
-
-Controls: Two rows of buttons.
-
-Row 1: Roots (C through B).
-
-Row 2: Qualities.
-
-Dynamic Labels: When I select a Root (e.g., "G"), update the text of the Quality buttons to match (e.g., show "Gm7" instead of just "m7").
-
-4. The "Gen AI" Simulation:
-
-Below the controls, include a "AI Theorist" section.
-
-When a chord is selected, trigger a mock asynchronous function (simulate a loading state) that displays a theoretical analysis of that chord (e.g., "The Cmaj13 is a lush jazz voicing...").
-
-5. Styling:
-
-Use a modern Dark Mode aesthetic (gray-900 background).
-
-Use Red as the accent color for active keys and buttons.
-
-Ensure the piano container has overflow: hidden and smooth transitions when resizing.
-            </textarea>
         </div>
     </div>
 
@@ -173,29 +122,33 @@ Ensure the piano container has overflow: hidden and smooth transitions when resi
             '11': '11', 'm11': 'm11', 'Maj11': 'maj11', '13': '13', 'm13': 'm13', 'Maj13': 'maj13'
         };
 
+        const inversionLabels = ['Root', '1st', '2nd', '3rd', '4th', '5th'];
+
         // --- 2. CONFIGURATION ---
         let currentOctaves = 2; // Start standard
         let selectedRootIndex = 0;
         let selectedQualityKey = 'Major';
+        let selectedInversion = 0;
 
         // --- 3. DOM ELEMENTS ---
         const pianoEl = document.getElementById('piano');
         const rootContainer = document.getElementById('root-container');
         const qualityContainer = document.getElementById('quality-container');
+        const inversionContainer = document.getElementById('inversion-container');
         const aiSection = document.getElementById('ai-section');
         const aiContent = document.getElementById('ai-content');
         const chordDisplay = document.getElementById('current-chord-display');
 
         // --- 4. BUILDERS ---
         function init() {
-            buildPiano(2); // Initial build
+            buildPiano(2);
             buildRootButtons();
             buildQualityButtons();
+            buildInversionButtons();
             selectRoot(0);
             selectQuality('Major');
         }
 
-        // DYNAMIC PIANO BUILDER
         function buildPiano(numOctaves) {
             pianoEl.innerHTML = '';
             currentOctaves = numOctaves;
@@ -209,7 +162,6 @@ Ensure the piano container has overflow: hidden and smooth transitions when resi
 
             for (let i = 0; i < totalSemitones; i++) {
                 const noteInOctave = i % 12;
-                // Pattern: 0=White, 1=Black, 2=White, 3=Black...
                 const isBlack = [1, 3, 6, 8, 10].includes(noteInOctave);
 
                 const key = document.createElement('div');
@@ -256,6 +208,23 @@ Ensure the piano container has overflow: hidden and smooth transitions when resi
             });
         }
 
+        function buildInversionButtons() {
+            inversionContainer.innerHTML = '';
+            
+            // Determine how many inversions are possible
+            // A chord with N notes has N possible positions (Root + N-1 inversions)
+            const numNotes = chordTypes[selectedQualityKey].length;
+            
+            for(let i = 0; i < numNotes; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = inversionLabels[i] || `${i}th`;
+                btn.dataset.inv = i;
+                btn.className = 'inv-btn px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold border border-transparent transition min-w-[3rem]';
+                btn.onclick = () => selectInversion(i);
+                inversionContainer.appendChild(btn);
+            }
+        }
+
         // --- 5. LOGIC & INTERACTION ---
 
         function selectRoot(index) {
@@ -281,6 +250,8 @@ Ensure the piano container has overflow: hidden and smooth transitions when resi
 
         function selectQuality(key) {
             selectedQualityKey = key;
+            // Reset inversion to Root when changing chord type to avoid bugs
+            selectedInversion = 0; 
             
             document.querySelectorAll('.quality-btn').forEach(btn => {
                 const isActive = btn.dataset.key === key;
@@ -289,26 +260,54 @@ Ensure the piano container has overflow: hidden and smooth transitions when resi
                     : 'quality-btn px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-medium border border-transparent transition min-w-[3rem]';
             });
 
+            // Rebuild inversion buttons because note count might have changed
+            buildInversionButtons();
+            selectInversion(0); // This triggers the update
+        }
+
+        function selectInversion(index) {
+            selectedInversion = index;
+
+            document.querySelectorAll('.inv-btn').forEach(btn => {
+                const isActive = parseInt(btn.dataset.inv) === index;
+                btn.className = isActive 
+                    ? 'inv-btn px-3 py-2 bg-red-600 text-white border-red-400 rounded text-xs font-bold border transition min-w-[3rem]'
+                    : 'inv-btn px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold border border-transparent transition min-w-[3rem]';
+            });
+
             updatePianoAndState();
         }
 
         function updatePianoAndState() {
-            // 1. Calculate Notes
-            const intervals = chordTypes[selectedQualityKey];
+            // 1. Get Base Intervals
+            let intervals = [...chordTypes[selectedQualityKey]]; // Copy array
+
+            // 2. Apply Inversion Logic
+            // Algorithm: Shift the first note up 12 semitones, repeat N times.
+            for (let i = 0; i < selectedInversion; i++) {
+                const firstNote = intervals.shift();
+                intervals.push(firstNote + 12);
+            }
+
+            // 3. Map to Absolute Keys
+            // We must sort intervals because inversions mess up the order (e.g., 4, 7, 12)
+            // But visually we just need the active indices.
             const activeIndices = intervals.map(interval => selectedRootIndex + interval);
+            
+            // 4. Determine Required Octaves
             const maxIndex = Math.max(...activeIndices);
+            
+            // Dynamic Calculation: e.g., index 30 needs 3 octaves, index 40 needs 4 octaves.
+            // 1 Octave = 12 keys.
+            let requiredOctaves = Math.ceil((maxIndex + 1) / 12);
+            if (requiredOctaves < 2) requiredOctaves = 2; // Min 2 octaves
+            if (requiredOctaves > 4) requiredOctaves = 4; // Max 4 octaves (safety cap)
 
-            // 2. Determine Required Octaves
-            // If the highest note is index 24 or greater (24 is the first note of 3rd octave), we need 3 octaves.
-            const requiredOctaves = (maxIndex >= 24) ? 3 : 2;
-
-            // 3. Rebuild Piano IF NEEDED
             if (currentOctaves !== requiredOctaves) {
                 buildPiano(requiredOctaves);
             }
 
-            // 4. Highlight Keys
-            // Clear previous
+            // 5. Highlight Keys
             document.querySelectorAll('.white-key, .black-key').forEach(k => k.classList.remove('active'));
 
             activeIndices.forEach(idx => {
@@ -316,27 +315,30 @@ Ensure the piano container has overflow: hidden and smooth transitions when resi
                 if (key) key.classList.add('active');
             });
 
-            // 5. Trigger AI
+            // 6. Trigger AI
             const chordName = notes[selectedRootIndex] + qualitySuffixes[selectedQualityKey];
-            triggerAI(chordName);
+            const invText = selectedInversion === 0 ? "Root Position" : `${inversionLabels[selectedInversion]} Inversion`;
+            triggerAI(chordName, invText);
         }
 
         // --- 6. MOCK AI ---
-        function triggerAI(name) {
+        function triggerAI(name, inversion) {
             aiSection.classList.remove('hidden');
-            chordDisplay.innerText = name;
-            aiContent.innerHTML = `<div class="flex items-center gap-2 text-gray-400"><div class="loader"></div> Analyzing harmony...</div>`;
+            chordDisplay.innerText = `${name} (${inversion})`;
+            aiContent.innerHTML = `<div class="flex items-center gap-2 text-gray-400"><div class="loader"></div> Analyzing voicing...</div>`;
 
             setTimeout(() => {
-                aiContent.innerHTML = generateMockResponse(name);
+                aiContent.innerHTML = generateMockResponse(name, inversion);
             }, 600);
         }
 
-        function generateMockResponse(name) {
-            if (name.includes('13')) return `<p><strong class="text-white">Extended Range:</strong> The <span class="text-red-400">${name}</span> requires 3 octaves to fully voice the 13th interval. Notice how the keyboard expanded?</p>`;
-            if (name.includes('11')) return `<p><strong class="text-white">Extension:</strong> The <span class="text-red-400">${name}</span> pushes the boundaries of a standard voicing, adding distinct color.</p>`;
-            if (name.includes('m9')) return `<p><strong class="text-white">Mood:</strong> <span class="text-red-400">${name}</span> adds the 9th for a "floating" sorrowful sound.</p>`;
-            return `<p><strong class="text-white">Analysis:</strong> <span class="text-red-400">${name}</span> is a foundational structure in Western music theory.</p>`;
+        function generateMockResponse(name, inversion) {
+            if (inversion.includes('1st')) return `<p><strong class="text-white">Voicing:</strong> You are playing the <span class="text-red-400">1st Inversion</span> of ${name}. The 3rd is now in the bass, creating a smoother transition to nearby chords.</p>`;
+            if (inversion.includes('2nd')) return `<p><strong class="text-white">Voicing:</strong> This is the <span class="text-red-400">2nd Inversion</span>. With the 5th in the bass, it feels slightly unstable, often acting as a 'Cadential 6/4' in classical theory.</p>`;
+            if (inversion.includes('3rd')) return `<p><strong class="text-white">Jazz Voicing:</strong> The <span class="text-red-400">3rd Inversion</span> puts the 7th in the bass. This creates strong forward motion.</p>`;
+            
+            if (name.includes('13')) return `<p><strong class="text-white">Extended Range:</strong> The <span class="text-red-400">${name}</span> requires 3+ octaves to fully voice. Notice how the keyboard expanded?</p>`;
+            return `<p><strong class="text-white">Analysis:</strong> <span class="text-red-400">${name}</span> in Root Position. The strongest and most stable way to play this chord.</p>`;
         }
 
         // Start
