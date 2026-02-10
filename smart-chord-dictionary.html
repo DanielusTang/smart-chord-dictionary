@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Chord Dictionary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* PIANO CONTAINER */
+        .piano-container {
+            position: relative;
+            width: 100%;
+            height: 14rem;
+            background: #1f2937;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* KEYS */
+        .white-key {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 0 0 4px 4px;
+            z-index: 1;
+            transition: background-color 0.1s ease, left 0.3s ease, width 0.3s ease;
+        }
+        .white-key.active {
+            background: #ef4444 !important;
+            box-shadow: inset 0 -5px 10px rgba(0,0,0,0.2);
+        }
+
+        .black-key {
+            position: absolute;
+            top: 0;
+            height: 60%;
+            background: #111;
+            border-radius: 0 0 4px 4px;
+            z-index: 10;
+            transition: background-color 0.1s ease, left 0.3s ease, width 0.3s ease;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        .black-key.active {
+            background: #b91c1c !important;
+            background-image: linear-gradient(to bottom, #b91c1c, #991b1b);
+        }
+        
+        /* Loading Animation */
+        .loader {
+            border: 3px solid #374151;
+            border-top: 3px solid #ef4444;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans flex flex-col items-center py-10">
+
+    <div class="w-full max-w-4xl px-4 mb-6">
+        <a href="portfolio_v1.html" class="inline-flex items-center text-gray-400 hover:text-white transition-colors duration-200 font-medium">
+            <span class="mr-2">←</span> Back to Portfolio
+        </a>
+    </div>
+
+    <header class="text-center mb-8 px-4">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2 text-white">Smart Chord Dictionary</h1>
+        <p class="text-gray-400 text-sm">Select a root & quality. The keyboard expands automatically for wide chords.</p>
+    </header>
+
+    <div class="w-full max-w-4xl px-2 mb-8">
+        <div id="piano" class="piano-container shadow-2xl border border-gray-700">
+            </div>
+    </div>
+
+    <div class="w-full max-w-4xl px-4 space-y-6">
+        
+        <div class="bg-gray-800 p-4 md:p-6 rounded-xl border border-gray-700">
+            <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3 font-semibold">1. Select Root</h3>
+            <div id="root-container" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="bg-gray-800 p-4 md:p-6 rounded-xl border border-gray-700">
+            <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3 font-semibold">2. Select Quality</h3>
+            <div id="quality-container" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div id="ai-section" class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-xl border border-gray-700 mt-8 hidden">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-700 pb-2">
+                <h2 class="text-xl font-bold text-red-400 flex items-center gap-2">AI Theorist</h2>
+                <span id="current-chord-display" class="bg-gray-700 px-3 py-1 rounded text-sm font-mono text-white"></span>
+            </div>
+            <div id="ai-content" class="text-gray-300 leading-relaxed text-sm md:text-base space-y-3"></div>
+        </div>
+
+        <div class="bg-gray-800 p-4 md:p-6 rounded-xl border border-gray-700 mt-8">
+            <h3 class="text-xs uppercase tracking-wider text-gray-500 mb-3 font-semibold">Prompt Used</h3>
+            <textarea class="w-full h-48 bg-gray-900 text-gray-300 p-3 rounded-lg border border-gray-600 font-mono text-sm focus:outline-none focus:border-red-500 transition" readonly>
+The "Smart Chord Dictionary" Prompt
+Context: I am building a portfolio project called "Smart Chord Dictionary." I need a single-file HTML solution using Tailwind CSS and Vanilla JavaScript.
+
+1. The Goal:
+Create an interactive music theory tool that visualizes chords on a virtual piano. It must feature "smart" UI logic that adapts to the user's selection.
+
+2. Data Requirements:
+Include a comprehensive dictionary of chord intervals for:
+
+Basics: 5, Major, Minor, sus, dim, aug.
+
+Sevenths: 7, m7, Maj7, mM7, dim7, m7b5, aug7, 7b5, 7#5.
+
+Extensions: 6, m6, 6/9, add9, 9, m9, Maj9, 11, m11, Maj11.
+
+Extended Range: 13, m13, Maj13.
+
+3. UI & Core Logic:
+
+The Piano: Start by rendering 2 octaves of keys. Use absolute positioning with percentages to ensure black keys sit perfectly between white keys.
+
+Smart Resizing (Crucial): If a selected chord (like a 13th) has notes that exceed the 2-octave range, automatically re-render the piano to show 3 octaves. Shrink it back to 2 octaves when not needed.
+
+Controls: Two rows of buttons.
+
+Row 1: Roots (C through B).
+
+Row 2: Qualities.
+
+Dynamic Labels: When I select a Root (e.g., "G"), update the text of the Quality buttons to match (e.g., show "Gm7" instead of just "m7").
+
+4. The "Gen AI" Simulation:
+
+Below the controls, include a "AI Theorist" section.
+
+When a chord is selected, trigger a mock asynchronous function (simulate a loading state) that displays a theoretical analysis of that chord (e.g., "The Cmaj13 is a lush jazz voicing...").
+
+5. Styling:
+
+Use a modern Dark Mode aesthetic (gray-900 background).
+
+Use Red as the accent color for active keys and buttons.
+
+Ensure the piano container has overflow: hidden and smooth transitions when resizing.
+            </textarea>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA CONSTANTS ---
+        const notes = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+        
+        const chordTypes = {
+            '5': [0, 7], 'Major': [0, 4, 7], 'Minor': [0, 3, 7], 'sus': [0, 5, 7], 
+            'dim': [0, 3, 6], 'aug': [0, 4, 8], '6': [0, 4, 7, 9], 'm6': [0, 3, 7, 9], 
+            '6/9': [0, 4, 7, 9, 14], '7': [0, 4, 7, 10], 'm7': [0, 3, 7, 10], 
+            'Maj7': [0, 4, 7, 11], 'mM7': [0, 3, 7, 11], 'dim7': [0, 3, 6, 9], 
+            'm7b5': [0, 3, 6, 10], 'aug7': [0, 4, 8, 10], '7-5': [0, 4, 6, 10], 
+            '7+5': [0, 4, 8, 10], 'add': [0, 4, 7, 14], '9': [0, 4, 7, 10, 14], 
+            'm9': [0, 3, 7, 10, 14], 'Maj9': [0, 4, 7, 11, 14], '11': [0, 7, 10, 14, 17], 
+            'm11': [0, 3, 7, 10, 14, 17], 'Maj11': [0, 4, 7, 11, 14, 17], 
+            '13': [0, 4, 7, 10, 14, 21], 'm13': [0, 3, 7, 10, 14, 21], 'Maj13': [0, 4, 7, 11, 14, 21]
+        };
+
+        const qualitySuffixes = {
+            '5': '5', 'Major': '', 'Minor': 'm', 'sus': 'sus', 'dim': 'dim', 'aug': 'aug',
+            '6': '6', 'm6': 'm6', '6/9': '6/9', '7': '7', 'm7': 'm7', 'Maj7': 'maj7',
+            'mM7': 'mM7', 'dim7': 'dim7', 'm7b5': 'm7b5', 'aug7': 'aug7', '7-5': '7b5',
+            '7+5': '7#5', 'add': 'add9', '9': '9', 'm9': 'm9', 'Maj9': 'maj9', 
+            '11': '11', 'm11': 'm11', 'Maj11': 'maj11', '13': '13', 'm13': 'm13', 'Maj13': 'maj13'
+        };
+
+        // --- 2. CONFIGURATION ---
+        let currentOctaves = 2; // Start standard
+        let selectedRootIndex = 0;
+        let selectedQualityKey = 'Major';
+
+        // --- 3. DOM ELEMENTS ---
+        const pianoEl = document.getElementById('piano');
+        const rootContainer = document.getElementById('root-container');
+        const qualityContainer = document.getElementById('quality-container');
+        const aiSection = document.getElementById('ai-section');
+        const aiContent = document.getElementById('ai-content');
+        const chordDisplay = document.getElementById('current-chord-display');
+
+        // --- 4. BUILDERS ---
+        function init() {
+            buildPiano(2); // Initial build
+            buildRootButtons();
+            buildQualityButtons();
+            selectRoot(0);
+            selectQuality('Major');
+        }
+
+        // DYNAMIC PIANO BUILDER
+        function buildPiano(numOctaves) {
+            pianoEl.innerHTML = '';
+            currentOctaves = numOctaves;
+
+            const whiteKeyCount = 7 * numOctaves;
+            const totalSemitones = 12 * numOctaves;
+            const whiteKeyWidth = 100 / whiteKeyCount; 
+            const blackKeyWidth = whiteKeyWidth * 0.65; 
+
+            let whiteKeyIndex = 0;
+
+            for (let i = 0; i < totalSemitones; i++) {
+                const noteInOctave = i % 12;
+                // Pattern: 0=White, 1=Black, 2=White, 3=Black...
+                const isBlack = [1, 3, 6, 8, 10].includes(noteInOctave);
+
+                const key = document.createElement('div');
+                key.dataset.index = i;
+
+                if (isBlack) {
+                    key.className = 'black-key';
+                    key.style.width = `${blackKeyWidth}%`;
+                    const leftPos = (whiteKeyIndex * whiteKeyWidth) - (blackKeyWidth / 2);
+                    key.style.left = `${leftPos}%`;
+                } else {
+                    key.className = 'white-key';
+                    key.style.width = `${whiteKeyWidth}%`;
+                    key.style.left = `${whiteKeyIndex * whiteKeyWidth}%`;
+                    whiteKeyIndex++;
+                }
+                pianoEl.appendChild(key);
+            }
+        }
+
+        function buildRootButtons() {
+            rootContainer.innerHTML = '';
+            notes.forEach((note, index) => {
+                const btn = document.createElement('button');
+                btn.innerText = note;
+                btn.dataset.index = index;
+                btn.className = 'root-btn px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold border border-transparent transition';
+                btn.onclick = () => selectRoot(index);
+                rootContainer.appendChild(btn);
+            });
+        }
+
+        function buildQualityButtons() {
+            qualityContainer.innerHTML = '';
+            const rootName = notes[selectedRootIndex];
+            
+            Object.keys(chordTypes).forEach(key => {
+                const btn = document.createElement('button');
+                btn.innerText = rootName + qualitySuffixes[key];
+                btn.dataset.key = key;
+                btn.className = 'quality-btn px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-medium border border-transparent transition min-w-[3rem]';
+                btn.onclick = () => selectQuality(key);
+                qualityContainer.appendChild(btn);
+            });
+        }
+
+        // --- 5. LOGIC & INTERACTION ---
+
+        function selectRoot(index) {
+            selectedRootIndex = index;
+            
+            document.querySelectorAll('.root-btn').forEach(btn => {
+                const isActive = parseInt(btn.dataset.index) === index;
+                btn.className = isActive 
+                    ? 'root-btn px-3 py-2 bg-red-600 text-white border-red-400 rounded text-xs font-bold border transition' 
+                    : 'root-btn px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold border border-transparent transition';
+            });
+
+            buildQualityButtons();
+            
+            // Restore visual state of current quality button
+            const activeQBtn = document.querySelector(`.quality-btn[data-key="${selectedQualityKey}"]`);
+            if (activeQBtn) {
+                activeQBtn.className = 'quality-btn px-3 py-2 bg-red-600 text-white border-red-400 rounded text-xs font-medium border transition min-w-[3rem]';
+            }
+
+            updatePianoAndState();
+        }
+
+        function selectQuality(key) {
+            selectedQualityKey = key;
+            
+            document.querySelectorAll('.quality-btn').forEach(btn => {
+                const isActive = btn.dataset.key === key;
+                btn.className = isActive 
+                    ? 'quality-btn px-3 py-2 bg-red-600 text-white border-red-400 rounded text-xs font-medium border transition min-w-[3rem]'
+                    : 'quality-btn px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-medium border border-transparent transition min-w-[3rem]';
+            });
+
+            updatePianoAndState();
+        }
+
+        function updatePianoAndState() {
+            // 1. Calculate Notes
+            const intervals = chordTypes[selectedQualityKey];
+            const activeIndices = intervals.map(interval => selectedRootIndex + interval);
+            const maxIndex = Math.max(...activeIndices);
+
+            // 2. Determine Required Octaves
+            // If the highest note is index 24 or greater (24 is the first note of 3rd octave), we need 3 octaves.
+            const requiredOctaves = (maxIndex >= 24) ? 3 : 2;
+
+            // 3. Rebuild Piano IF NEEDED
+            if (currentOctaves !== requiredOctaves) {
+                buildPiano(requiredOctaves);
+            }
+
+            // 4. Highlight Keys
+            // Clear previous
+            document.querySelectorAll('.white-key, .black-key').forEach(k => k.classList.remove('active'));
+
+            activeIndices.forEach(idx => {
+                const key = document.querySelector(`div[data-index="${idx}"]`);
+                if (key) key.classList.add('active');
+            });
+
+            // 5. Trigger AI
+            const chordName = notes[selectedRootIndex] + qualitySuffixes[selectedQualityKey];
+            triggerAI(chordName);
+        }
+
+        // --- 6. MOCK AI ---
+        function triggerAI(name) {
+            aiSection.classList.remove('hidden');
+            chordDisplay.innerText = name;
+            aiContent.innerHTML = `<div class="flex items-center gap-2 text-gray-400"><div class="loader"></div> Analyzing harmony...</div>`;
+
+            setTimeout(() => {
+                aiContent.innerHTML = generateMockResponse(name);
+            }, 600);
+        }
+
+        function generateMockResponse(name) {
+            if (name.includes('13')) return `<p><strong class="text-white">Extended Range:</strong> The <span class="text-red-400">${name}</span> requires 3 octaves to fully voice the 13th interval. Notice how the keyboard expanded?</p>`;
+            if (name.includes('11')) return `<p><strong class="text-white">Extension:</strong> The <span class="text-red-400">${name}</span> pushes the boundaries of a standard voicing, adding distinct color.</p>`;
+            if (name.includes('m9')) return `<p><strong class="text-white">Mood:</strong> <span class="text-red-400">${name}</span> adds the 9th for a "floating" sorrowful sound.</p>`;
+            return `<p><strong class="text-white">Analysis:</strong> <span class="text-red-400">${name}</span> is a foundational structure in Western music theory.</p>`;
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
